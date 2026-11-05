@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Sparkles,
   Layers,
@@ -22,15 +22,42 @@ import ArticleCard from '../components/ArticleCard';
 import ReportCard from '../components/ReportCard';
 
 export default function DashboardOverview() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryFromQuery = searchParams.get('category');
+  const storedCategory = sessionStorage.getItem('crossview_overview_category');
+  const initialCategory = categoryFromQuery || storedCategory || 'All';
+
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedPublisher, setSelectedPublisher] = useState('All');
   const [filterDevelopingOnly, setFilterDevelopingOnly] = useState(false);
 
   useEffect(() => {
     loadOverview();
+    const handleSync = () => loadOverview();
+    window.addEventListener('crossview:sync-intelligence', handleSync);
+    return () => window.removeEventListener('crossview:sync-intelligence', handleSync);
   }, []);
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat && cat !== selectedCategory) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
+
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat);
+    sessionStorage.setItem('crossview_overview_category', cat);
+    const nextParams = new URLSearchParams(searchParams);
+    if (cat === 'All') {
+      nextParams.delete('category');
+    } else {
+      nextParams.set('category', cat);
+    }
+    setSearchParams(nextParams, { replace: true });
+  };
 
   const loadOverview = () => {
     setLoading(true);
@@ -59,6 +86,38 @@ export default function DashboardOverview() {
     filteredEvents = filteredEvents.filter((e) => e.status === 'active' || e.status === 'developing');
   }
 
+  // Filter latest reports by category, publisher, and developing flag
+  let filteredReports = overview?.latestReports || [];
+  if (selectedCategory !== 'All') {
+    filteredReports = filteredReports.filter(
+      (r) => r.category?.toLowerCase() === selectedCategory.toLowerCase()
+    );
+  }
+  if (selectedPublisher !== 'All') {
+    filteredReports = filteredReports.filter(
+      (r) =>
+        r.sourceReferences?.some((s) => s.sourceName?.toLowerCase().includes(selectedPublisher.toLowerCase()))
+    );
+  }
+  if (filterDevelopingOnly) {
+    filteredReports = filteredReports.filter(
+      (r) => r.eventStatus === 'active' || r.eventStatus === 'developing'
+    );
+  }
+
+  // Filter featured articles by category and publisher
+  let filteredArticles = overview?.featuredNews || [];
+  if (selectedCategory !== 'All') {
+    filteredArticles = filteredArticles.filter(
+      (a) => a.category?.toLowerCase() === selectedCategory.toLowerCase()
+    );
+  }
+  if (selectedPublisher !== 'All') {
+    filteredArticles = filteredArticles.filter(
+      (a) => a.sourceName?.toLowerCase().includes(selectedPublisher.toLowerCase())
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Top News Activity Chart (Reference 1 Inspiration) */}
@@ -84,7 +143,7 @@ export default function DashboardOverview() {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => handleCategorySelect(cat)}
                   className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs transition-colors ${
                     selectedCategory === cat
                       ? 'bg-navy text-white font-semibold'
@@ -171,9 +230,29 @@ export default function DashboardOverview() {
 
           {/* AI Consolidated Reports */}
           <div className="space-y-6">
-            {(overview?.latestReports || []).map((report) => (
-              <ReportCard key={report._id || report.eventId} report={report} />
-            ))}
+            {filteredReports.length > 0 ? (
+              filteredReports.map((report) => (
+                <ReportCard key={report._id || report.eventId} report={report} />
+              ))
+            ) : (
+              <div className="bg-white p-8 rounded-lg border border-border text-center shadow-card space-y-3">
+                <Sparkles className="w-8 h-8 text-secondary mx-auto opacity-40" />
+                <h4 className="text-sm font-bold text-primary">
+                  No intelligence reports currently under "{selectedCategory}"
+                </h4>
+                <p className="text-xs text-secondary max-w-sm mx-auto">
+                  {selectedPublisher !== 'All'
+                    ? `No reports match ${selectedCategory} domain and publisher "${selectedPublisher}".`
+                    : `No reports have been consolidated under ${selectedCategory} yet.`}
+                </p>
+                <button
+                  onClick={() => handleCategorySelect('All')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#F7F7F5] hover:bg-border text-xs font-semibold text-navy transition-colors border border-border"
+                >
+                  Show All Topics
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Central Featured Articles Grid */}
@@ -187,11 +266,17 @@ export default function DashboardOverview() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(overview?.featuredNews || []).slice(0, 4).map((article) => (
-                <ArticleCard key={article._id || article.id} article={article} />
-              ))}
-            </div>
+            {filteredArticles.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredArticles.slice(0, 4).map((article) => (
+                  <ArticleCard key={article._id || article.id} article={article} />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white p-6 rounded-lg border border-border text-center text-xs text-secondary">
+                No publisher dispatches match the selected topic filter.
+              </div>
+            )}
           </div>
         </div>
 
@@ -292,3 +377,4 @@ export default function DashboardOverview() {
     </div>
   );
 }
+

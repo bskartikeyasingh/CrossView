@@ -125,3 +125,4 @@ Chronological milestone reconstruction.
 
 ### `bookmarks` & `savedreports`
 Associates saved intelligence files to authenticated users via `firebaseUid` (indexed).
+

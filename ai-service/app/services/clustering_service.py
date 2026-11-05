@@ -114,10 +114,11 @@ class ClusteringService:
                 if time_diff_hours > time_window_hours:
                     time_penalty = min(0.25, (time_diff_hours - time_window_hours) / 100.0)
 
-                hybrid_score = (0.75 * cos_score) + (0.25 * keyword_jaccard) - time_penalty
+                keyword_boost = min(0.35, overlap * 0.12) if overlap >= 2 else 0.0
+                hybrid_score = (0.60 * cos_score) + (0.40 * keyword_jaccard) + keyword_boost - time_penalty
 
                 # Articles must satisfy either strong cosine sim or solid hybrid score
-                if hybrid_score >= threshold or (cos_score >= (threshold + 0.08) and time_diff_hours <= (time_window_hours * 1.5)):
+                if hybrid_score >= threshold or cos_score >= (threshold + 0.08) or (overlap >= 2 and keyword_jaccard >= 0.15 and time_diff_hours <= time_window_hours):
                     current_cluster.append(j)
                     visited.add(j)
 
@@ -179,3 +180,4 @@ class ClusteringService:
         )
 
 clustering_service = ClusteringService()
+

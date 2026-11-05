@@ -60,3 +60,4 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFA
 > [!IMPORTANT]
 > - Never commit `serviceAccountKey.json` or `.env` files to git. Both are included in `.gitignore`.
 > - Handle multiline private keys by wrapping the string in double quotes and preserving `\n` characters. The backend automatically parses escaped newlines.
+

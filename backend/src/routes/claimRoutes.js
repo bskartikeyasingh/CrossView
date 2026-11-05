@@ -7,3 +7,4 @@ router.get('/:id', getClaimById);
 router.get('/event/:id', getEventClaims);
 
 module.exports = router;
+

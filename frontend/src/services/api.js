@@ -50,6 +50,7 @@ export const apiService = {
   searchNews: (q, category) => api.get('/news/search', { params: { q, category } }),
   getArticleById: (id) => api.get(`/news/${id}`),
   refreshNews: (data = {}) => api.post('/news/refresh', data),
+  uploadNews: (data) => api.post('/news/upload', data),
 
   // Events
   getEvents: (params = {}) => api.get('/events', { params }),
@@ -87,3 +88,4 @@ export const apiService = {
 };
 
 export default api;
+

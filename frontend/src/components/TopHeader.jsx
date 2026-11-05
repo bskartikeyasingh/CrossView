@@ -25,6 +25,7 @@ export default function TopHeader({ setMobileOpen, onRefreshComplete }) {
       const res = await apiService.refreshNews();
       setStatusMessage('Sync completed');
       if (onRefreshComplete) onRefreshComplete(res);
+      window.dispatchEvent(new CustomEvent('crossview:sync-intelligence', { detail: res }));
       setTimeout(() => setStatusMessage(''), 3000);
     } catch (err) {
       setStatusMessage('Sync failed: ' + err.message);
@@ -88,3 +89,4 @@ export default function TopHeader({ setMobileOpen, onRefreshComplete }) {
     </header>
   );
 }
+

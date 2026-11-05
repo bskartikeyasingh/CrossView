@@ -39,3 +39,4 @@ def ask_crossview(data: AskCrossViewRequest):
         existing_claims=data.existing_claims,
         consolidated_report=data.consolidated_report
     )
+

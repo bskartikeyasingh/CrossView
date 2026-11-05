@@ -17,3 +17,4 @@ router.get('/:id/comparison', getEventComparison);
 router.get('/:id/report', getEventReport);
 
 module.exports = router;
+

@@ -151,3 +151,4 @@ export default function NewsActivityChart() {
     </div>
   );
 }
+

@@ -58,3 +58,4 @@ const TimelineSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.models.Timeline || mongoose.model('Timeline', TimelineSchema);
+

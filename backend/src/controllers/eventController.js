@@ -8,7 +8,7 @@ const aiClientService = require('../services/aiClientService');
 
 const getEvents = async (req, res) => {
   try {
-    const { category, page = 1, limit = 15 } = req.query;
+    const { category, page = 1, limit = 50 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
@@ -218,3 +218,4 @@ module.exports = {
   getEventComparison,
   getEventReport,
 };
+

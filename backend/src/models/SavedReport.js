@@ -38,3 +38,4 @@ const SavedReportSchema = new mongoose.Schema(
 SavedReportSchema.index({ firebaseUid: 1, reportId: 1 }, { unique: true });
 
 module.exports = mongoose.models.SavedReport || mongoose.model('SavedReport', SavedReportSchema);
+

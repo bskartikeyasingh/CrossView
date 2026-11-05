@@ -137,4 +137,65 @@ const refreshNews = async (req, res) => {
   }
 };
 
-module.exports = { getNews, searchNews, getArticleById, refreshNews };
+const uploadNews = async (req, res) => {
+  try {
+    const { title, description, content, sourceName, category = 'General', url, imageUrl, publishedAt } = req.body;
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Article title is required.' });
+    }
+
+    const newArticleData = {
+      title,
+      description: description || '',
+      content: content || description || '',
+      sourceName: sourceName || 'Direct Ingestion',
+      sourceDomain: sourceName ? `${sourceName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com` : 'direct.crossview',
+      category: category || 'General',
+      url: url || `https://crossview.intelligence/articles/${Date.now()}`,
+      imageUrl: imageUrl || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1200&auto=format&fit=crop',
+      publishedAt: publishedAt ? new Date(publishedAt) : new Date(),
+      contentAvailability: 'full',
+      fetchedAt: new Date(),
+    };
+
+    let createdArticle = null;
+    if (getStatus()) {
+      createdArticle = await Article.create(newArticleData);
+    } else {
+      const id = `art_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      createdArticle = { _id: id, id, ...newArticleData };
+      memoryStore.articles.set(id, createdArticle);
+    }
+
+    // Process article through clustering so it forms or joins a cluster immediately
+    let clusterEvent = null;
+    try {
+      clusterEvent = await clusteringPipeline._saveOrUpdateEvent(
+        {
+          suggested_title: title,
+          category,
+          source_count: 1,
+          first_reported_at: newArticleData.publishedAt,
+          last_updated_at: newArticleData.publishedAt,
+          confidence_score: 0.95,
+        },
+        [createdArticle]
+      );
+    } catch (clusterErr) {
+      console.warn('Clustering on upload error:', clusterErr.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Article uploaded and indexed into intelligence cluster.',
+      article: createdArticle,
+      event: clusterEvent,
+      eventId: clusterEvent ? (clusterEvent._id || clusterEvent.id) : null,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+module.exports = { getNews, searchNews, getArticleById, refreshNews, uploadNews };
+

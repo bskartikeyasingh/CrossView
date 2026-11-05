@@ -51,3 +51,4 @@ BookmarkSchema.index({ firebaseUid: 1, articleId: 1 });
 BookmarkSchema.index({ firebaseUid: 1, reportId: 1 });
 
 module.exports = mongoose.models.Bookmark || mongoose.model('Bookmark', BookmarkSchema);
+

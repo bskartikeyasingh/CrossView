@@ -17,3 +17,4 @@ def generate_embeddings(request: EmbeddingRequest):
         dimensions=dims,
         model=settings.EMBEDDING_MODEL
     )
+

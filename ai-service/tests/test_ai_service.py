@@ -1,5 +1,7 @@
 import sys
 import os
+os.environ["SKIP_HEAVY_EMBEDDINGS"] = "1"
+os.environ["TEST_FALLBACK"] = "1"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.routers.health import health_check

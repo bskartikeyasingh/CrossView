@@ -69,6 +69,11 @@ export default function ReportCard({ report, onSaveReport }) {
               <Layers className="w-3 h-3 text-secondary" />
               <span>{sourcesCount} Independent Sources</span>
             </span>
+            {report.category && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-navy/10 text-navy border border-navy/20">
+                {report.category}
+              </span>
+            )}
           </div>
 
           <div className="text-xs text-secondary font-medium">
@@ -185,3 +190,4 @@ export default function ReportCard({ report, onSaveReport }) {
     </article>
   );
 }
+

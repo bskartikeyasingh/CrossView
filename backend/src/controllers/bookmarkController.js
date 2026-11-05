@@ -87,3 +87,4 @@ const deleteBookmark = async (req, res) => {
 };
 
 module.exports = { getBookmarks, createBookmark, deleteBookmark };
+

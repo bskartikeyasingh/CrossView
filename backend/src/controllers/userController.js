@@ -67,3 +67,4 @@ const updatePreferences = async (req, res) => {
 };
 
 module.exports = { getProfile, updateProfile, updatePreferences };
+

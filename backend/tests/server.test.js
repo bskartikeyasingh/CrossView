@@ -153,3 +153,42 @@ test('Protected routes accept valid token and manage user profile and bookmarks'
   });
   assert.strictEqual(delRes.statusCode, 200);
 });
+
+test('Issue 1: GET /api/dashboard/overview reports contain populated category fields for all domains', async () => {
+  const res = await callExpress(app, { url: '/api/dashboard/overview' });
+  assert.strictEqual(res.statusCode, 200);
+  assert.ok(res.data.latestReports.length >= 3);
+  // Verify reports have valid category property
+  res.data.latestReports.forEach((report) => {
+    assert.ok(report.category, 'Report must have a category property');
+  });
+  const categories = res.data.latestReports.map((r) => r.category);
+  assert.ok(categories.includes('Climate'), 'Reports must include Climate');
+  assert.ok(categories.includes('Economy'), 'Reports must include Economy');
+  assert.ok(categories.includes('Technology'), 'Reports must include Technology');
+});
+
+test('Issue 2: POST /api/news/upload indexes news and updates available developing events', async () => {
+  const uploadRes = await callExpress(app, {
+    method: 'POST',
+    url: '/api/news/upload',
+    body: {
+      title: 'Global Autonomous Drone Air-Traffic Management Protocol Ratified',
+      description: 'Aviation authorities establish unified algorithmic routing corridors for cargo drones.',
+      content: 'Civil aviation directors from 45 nations finalized the automated flight-level safety framework.',
+      sourceName: 'Aviation Week',
+      category: 'Technology',
+    },
+  });
+  assert.strictEqual(uploadRes.statusCode, 201);
+  assert.strictEqual(uploadRes.data.success, true);
+  assert.ok(uploadRes.data.eventId, 'Upload should return associated cluster eventId');
+
+  // Verify that GET /api/events now includes this developing story
+  const eventsRes = await callExpress(app, { url: '/api/events?limit=50' });
+  assert.strictEqual(eventsRes.statusCode, 200);
+  const matchedEvent = eventsRes.data.events.find((e) =>
+    e.title.includes('Global Autonomous Drone')
+  );
+  assert.ok(matchedEvent, 'Uploaded article must dynamically form/update a developing story event');
+});

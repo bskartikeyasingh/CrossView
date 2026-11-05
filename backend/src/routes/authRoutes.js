@@ -7,3 +7,4 @@ router.get('/me', requireAuth, getMe);
 router.post('/logout', requireAuth, logout);
 
 module.exports = router;
+

@@ -30,7 +30,7 @@ class GeminiService:
         self._init_client()
 
     def _init_client(self):
-        if self.api_key:
+        if self.api_key and self.api_key != "your_gemini_api_key_here" and not os.environ.get("TEST_FALLBACK"):
             try:
                 # Try google-genai or google.generativeai
                 import google.generativeai as genai
@@ -51,7 +51,8 @@ class GeminiService:
             full_prompt = f"System Instruction: {system_instruction}\n\nStrict Output Format: JSON only.\n\nTask: {prompt}"
             response = self._client.generate_content(
                 full_prompt,
-                generation_config={"response_mime_type": "application/json"}
+                generation_config={"response_mime_type": "application/json"},
+                request_options={"timeout": 4}
             )
             raw_text = response.text.strip()
             # Clean markdown code blocks if wrapped
@@ -459,3 +460,4 @@ class GeminiService:
         )
 
 gemini_service = GeminiService()
+

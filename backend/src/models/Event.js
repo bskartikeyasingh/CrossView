@@ -60,3 +60,4 @@ const EventSchema = new mongoose.Schema(
 EventSchema.index({ title: 'text', summary: 'text' });
 
 module.exports = mongoose.models.Event || mongoose.model('Event', EventSchema);
+

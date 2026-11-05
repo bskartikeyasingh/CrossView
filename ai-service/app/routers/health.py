@@ -17,3 +17,4 @@ def health_check():
         "gemini_model": settings.GEMINI_MODEL,
         "gemini_configured": bool(settings.GEMINI_API_KEY)
     }
+

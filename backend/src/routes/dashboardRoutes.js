@@ -7,3 +7,4 @@ router.get('/trending', getTrending);
 router.get('/activity', getActivity);
 
 module.exports = router;
+

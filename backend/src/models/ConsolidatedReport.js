@@ -9,6 +9,11 @@ const ConsolidatedReportSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    category: {
+      type: String,
+      default: 'General',
+      index: true,
+    },
     headline: {
       type: String,
       required: true,
@@ -81,3 +86,4 @@ const ConsolidatedReportSchema = new mongoose.Schema(
 module.exports =
   mongoose.models.ConsolidatedReport ||
   mongoose.model('ConsolidatedReport', ConsolidatedReportSchema);
+

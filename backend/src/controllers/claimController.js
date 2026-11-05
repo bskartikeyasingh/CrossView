@@ -98,3 +98,4 @@ const getEventClaims = async (req, res) => {
 };
 
 module.exports = { getAllClaims, getClaimById, getEventClaims };
+

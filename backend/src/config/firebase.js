@@ -77,3 +77,4 @@ const verifyIdToken = async (idToken) => {
 };
 
 module.exports = { initFirebase, verifyIdToken, admin, isFirebaseInitialized: () => firebaseInitialized };
+

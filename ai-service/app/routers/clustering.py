@@ -14,3 +14,4 @@ def cluster_articles(request: ClusteringRequest):
         threshold=request.threshold,
         time_window_hours=request.time_window_hours or 72
     )
+

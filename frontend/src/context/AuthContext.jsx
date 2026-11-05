@@ -257,3 +257,4 @@ function getFirebaseErrorMessage(code) {
       return null;
   }
 }
+

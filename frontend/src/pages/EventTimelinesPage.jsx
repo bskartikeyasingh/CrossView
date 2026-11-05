@@ -12,24 +12,68 @@ export default function EventTimelinesPage() {
   const [timeline, setTimeline] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    apiService
-      .getEvents({ limit: 10 })
+  const loadEventsList = (preferredId) => {
+    return apiService
+      .getEvents({ limit: 50 })
       .then((res) => {
         if (res.success && res.events) {
-          setEvents(res.events);
-          if (!selectedEventId && res.events.length > 0) {
-            setSelectedEventId(res.events[0]._id);
+          const uniqueEvents = [];
+          const seen = new Set();
+          res.events.forEach((e) => {
+            const id = String(e._id || e.id);
+            if (id && !seen.has(id)) {
+              seen.add(id);
+              uniqueEvents.push(e);
+            }
+          });
+
+          setEvents(uniqueEvents);
+
+          const targetId = preferredId || selectedEventId;
+          const exists = uniqueEvents.some((e) => String(e._id || e.id) === String(targetId));
+
+          if (exists) {
+            setSelectedEventId(targetId);
+          } else if (uniqueEvents.length > 0) {
+            setSelectedEventId(String(uniqueEvents[0]._id || uniqueEvents[0].id));
+          } else {
+            setSelectedEventId('');
+            setTimeline(null);
           }
         }
       })
-      .catch((err) => console.warn('Events load error:', err))
-      .finally(() => setLoading(false));
+      .catch((err) => console.warn('Events load error:', err));
+  };
+
+  useEffect(() => {
+    loadEventsList(initialEventId);
+
+    const handleSync = () => {
+      loadEventsList();
+    };
+
+    window.addEventListener('crossview:sync-intelligence', handleSync);
+    window.addEventListener('crossview:news-uploaded', handleSync);
+
+    return () => {
+      window.removeEventListener('crossview:sync-intelligence', handleSync);
+      window.removeEventListener('crossview:news-uploaded', handleSync);
+    };
   }, []);
+
+  useEffect(() => {
+    const queryEventId = new URLSearchParams(location.search).get('eventId');
+    if (queryEventId && queryEventId !== selectedEventId) {
+      setSelectedEventId(queryEventId);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (selectedEventId) {
       loadTimeline(selectedEventId);
+    } else {
+      setLoading(false);
+      setTimeline(null);
     }
   }, [selectedEventId]);
 
@@ -47,7 +91,7 @@ export default function EventTimelinesPage() {
     }
   };
 
-  const selectedEvent = events.find((e) => e._id === selectedEventId);
+  const selectedEvent = events.find((e) => String(e._id || e.id) === String(selectedEventId));
 
   const getCategoryColor = (cat) => {
     switch (cat) {
@@ -91,13 +135,27 @@ export default function EventTimelinesPage() {
           <select
             value={selectedEventId}
             onChange={(e) => setSelectedEventId(e.target.value)}
-            className="w-full p-2 bg-[#F7F7F5] border border-border rounded text-xs font-medium text-primary focus:outline-none focus:border-navy"
+            disabled={events.length === 0}
+            className="w-full p-2 bg-[#F7F7F5] border border-border rounded text-xs font-medium text-primary focus:outline-none focus:border-navy disabled:opacity-60"
           >
-            {events.map((evt) => (
-              <option key={evt._id} value={evt._id}>
-                {evt.title.substring(0, 50)}...
-              </option>
-            ))}
+            {events.length === 0 ? (
+              <option value="">No developing stories available</option>
+            ) : (
+              events.map((evt) => {
+                const id = String(evt._id || evt.id);
+                const title = evt.title
+                  ? evt.title.length > 55
+                    ? evt.title.substring(0, 55) + '...'
+                    : evt.title
+                  : 'Developing Story';
+                const count = evt.sourceCount || evt.articleIds?.length || 1;
+                return (
+                  <option key={id} value={id}>
+                    {title} ({count} {count === 1 ? 'source' : 'sources'})
+                  </option>
+                );
+              })
+            )}
           </select>
         </div>
       </div>
@@ -195,3 +253,4 @@ export default function EventTimelinesPage() {
     </div>
   );
 }
+

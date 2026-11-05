@@ -100,3 +100,4 @@ class AskCrossViewResponse(BaseModel):
     confidence_level: str
     unanswered_aspects: Optional[str] = None
     synthesized_from_sources_count: int
+

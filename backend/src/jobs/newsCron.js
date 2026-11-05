@@ -26,3 +26,4 @@ const stopCronJobs = () => {
 };
 
 module.exports = { initCronJobs, stopCronJobs };
+

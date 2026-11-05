@@ -70,3 +70,4 @@ const ClaimSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.models.Claim || mongoose.model('Claim', ClaimSchema);
+

@@ -166,3 +166,4 @@ class NewsService {
 const newsService = new NewsService();
 
 module.exports = newsService;
+

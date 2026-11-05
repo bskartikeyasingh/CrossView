@@ -16,7 +16,7 @@ const getOverview = async (req, res) => {
       [events, articles, reports, claims] = await Promise.all([
         Event.find({}).sort({ lastUpdatedAt: -1 }).limit(10).lean(),
         Article.find({}).sort({ publishedAt: -1 }).limit(12).lean(),
-        ConsolidatedReport.find({}).sort({ generatedAt: -1 }).limit(6).lean(),
+        ConsolidatedReport.find({}).sort({ generatedAt: -1 }).limit(10).lean(),
         Claim.find({}).sort({ createdAt: -1 }).limit(10).lean(),
       ]);
     } else {
@@ -28,11 +28,24 @@ const getOverview = async (req, res) => {
         .slice(0, 12);
       reports = Array.from(memoryStore.reports.values())
         .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
-        .slice(0, 6);
+        .slice(0, 10);
       claims = Array.from(memoryStore.claims.values())
         .sort((a, b) => new Date(b.createdAt || Date.now()) - new Date(a.createdAt || Date.now()))
         .slice(0, 10);
     }
+
+    const allEventsMap = getStatus()
+      ? new Map(events.map((e) => [String(e._id || e.id), e]))
+      : new Map(Array.from(memoryStore.events.values()).map((e) => [String(e._id || e.id), e]));
+
+    const enrichedReports = reports.map((r) => {
+      const ev = allEventsMap.get(String(r.eventId));
+      return {
+        ...r,
+        category: r.category || ev?.category || 'General',
+        eventStatus: ev?.status || r.eventStatus || 'active',
+      };
+    });
 
     const publishers = Array.from(new Set(articles.map((a) => a.sourceName).filter(Boolean)));
     const categories = Array.from(new Set(events.map((e) => e.category).filter(Boolean)));
@@ -48,7 +61,7 @@ const getOverview = async (req, res) => {
       },
       featuredNews: articles.slice(0, 4),
       trendingEvents: events.slice(0, 5),
-      latestReports: reports,
+      latestReports: enrichedReports,
       disputedClaims: claims.filter((c) => c.evidenceStatus === 'Disputed by available reports'),
       publishers,
       categories,
@@ -128,3 +141,4 @@ const getActivity = async (req, res) => {
 };
 
 module.exports = { getOverview, getTrending, getActivity };
+

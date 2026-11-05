@@ -18,6 +18,9 @@ class EmbeddingService:
         self._load_model()
 
     def _load_model(self):
+        if os.environ.get("SKIP_HEAVY_EMBEDDINGS") == "1":
+            self.model = None
+            return
         try:
             from sentence_transformers import SentenceTransformer
             logger.info(f"Loading SentenceTransformer model: {self.model_name}")
@@ -25,8 +28,11 @@ class EmbeddingService:
                 # Try loading from local cached weights first to avoid network timeouts
                 self.model = SentenceTransformer(self.model_name, local_files_only=True)
             except Exception:
-                self.model = SentenceTransformer(self.model_name)
-            logger.info("SentenceTransformer model loaded successfully.")
+                self.model = None
+            if self.model:
+                logger.info("SentenceTransformer model loaded successfully.")
+            else:
+                logger.info("Local SentenceTransformer cache not found; using resilient fallback embeddings.")
         except Exception as e:
             logger.warning(f"Could not load SentenceTransformer ({e}). Using resilient embedding fallback.")
             self.model = None

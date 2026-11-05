@@ -199,6 +199,7 @@ class ClusteringPipeline {
         await ConsolidatedReport.findOneAndUpdate(
           { eventId: event._id },
           {
+            category: event.category || 'General',
             headline: reportData.headline,
             overview: reportData.overview,
             whatHappened: reportData.what_happened,
@@ -217,6 +218,7 @@ class ClusteringPipeline {
         memoryStore.reports.set(eventIdStr, {
           _id: `rep_${eventIdStr}`,
           eventId: eventIdStr,
+          category: event.category || 'General',
           headline: reportData.headline,
           overview: reportData.overview,
           whatHappened: reportData.what_happened,
@@ -314,3 +316,4 @@ class ClusteringPipeline {
 const clusteringPipeline = new ClusteringPipeline();
 
 module.exports = clusteringPipeline;
+

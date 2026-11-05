@@ -144,6 +144,78 @@ class MemoryStore {
         contentAvailability: 'full',
         eventId: '672b20010000000000000003',
         fetchedAt: new Date(),
+      },
+      {
+        _id: '672b10010000000000000008',
+        title: 'UN Maritime Agency Adopts Universal Carbon Levies on Commercial Cargo Fleets',
+        description: 'International Maritime Organization delegates approved a historic net-zero framework requiring global bunker fuel levies by 2027.',
+        content: 'Representatives from 175 member nations passed the landmark maritime decarbonization framework after two weeks of contentious sessions in London.',
+        sourceName: 'Reuters',
+        sourceDomain: 'reuters.com',
+        author: 'Jonathan Saul',
+        publishedAt: new Date(Date.now() - 14 * 3600000),
+        url: 'https://reuters.com/sustainability/imo-shipping-carbon-levy-agreement',
+        imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1200&auto=format&fit=crop',
+        category: 'World',
+        country: 'global',
+        language: 'en',
+        contentAvailability: 'full',
+        eventId: '672b20010000000000000004',
+        fetchedAt: new Date(),
+      },
+      {
+        _id: '672b10010000000000000009',
+        title: 'Pacific Island Nations Applaud Historic Maritime Emissions Levy Despite Concessions',
+        description: 'Island representatives welcomed the treaty as an indispensable precedent for international climate taxation and loss-and-damage resilience.',
+        content: 'Developing island states commended the global bunker levy, noting that revenues generated will directly fund port climate adaptation across vulnerable coastlines.',
+        sourceName: 'Associated Press',
+        sourceDomain: 'apnews.com',
+        author: 'Alisi Rabuka',
+        publishedAt: new Date(Date.now() - 13 * 3600000),
+        url: 'https://apnews.com/article/un-maritime-shipping-climate-pact',
+        imageUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200&auto=format&fit=crop',
+        category: 'World',
+        country: 'global',
+        language: 'en',
+        contentAvailability: 'full',
+        eventId: '672b20010000000000000004',
+        fetchedAt: new Date(),
+      },
+      {
+        _id: '672b10010000000000000010',
+        title: 'European Parliament Enacts Strict AI Transparency Standards for Digital Campaigning',
+        description: 'Lawmakers voted overwhelmingly to mandate watermarking and audit logs for synthetic media deployed in parliamentary election cycles.',
+        content: 'The European Parliament approved comprehensive digital integrity legislation requiring political campaigns to transparently label all generative AI outputs.',
+        sourceName: 'Financial Times',
+        sourceDomain: 'ft.com',
+        author: 'Javier Espinoza',
+        publishedAt: new Date(Date.now() - 16 * 3600000),
+        url: 'https://ft.com/policy/eu-ai-political-campaign-standards',
+        imageUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=1200&auto=format&fit=crop',
+        category: 'Politics',
+        country: 'global',
+        language: 'en',
+        contentAvailability: 'full',
+        eventId: '672b20010000000000000005',
+        fetchedAt: new Date(),
+      },
+      {
+        _id: '672b10010000000000000011',
+        title: 'Bipartisan Coalition Reaches Milestone Accord on Electoral Algorithmic Oversight',
+        description: 'Electoral watchdogs and party whips establish unified reporting mechanisms to counter foreign synthetic misinformation campaigns.',
+        content: 'Following joint legislative hearings, cross-party leaders codified rigorous disclosure requirements for political social advertisements.',
+        sourceName: 'Bloomberg',
+        sourceDomain: 'bloomberg.com',
+        author: 'Liam Denning',
+        publishedAt: new Date(Date.now() - 15 * 3600000),
+        url: 'https://bloomberg.com/politics/electoral-algorithmic-oversight-accord',
+        imageUrl: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=1200&auto=format&fit=crop',
+        category: 'Politics',
+        country: 'global',
+        language: 'en',
+        contentAvailability: 'full',
+        eventId: '672b20010000000000000005',
+        fetchedAt: new Date(),
       }
     ];
 
@@ -192,6 +264,34 @@ class MemoryStore {
         status: 'active',
         confidenceScore: 0.92,
         createdAt: new Date(Date.now() - 12 * 3600000),
+      },
+      {
+        _id: '672b20010000000000000004',
+        title: 'UN Maritime Agency Adopts Universal Carbon Levies on Commercial Shipping',
+        summary: 'International Maritime Organization passes landmark maritime decarbonization framework requiring universal bunker fuel carbon taxes by 2027.',
+        category: 'World',
+        country: 'global',
+        articleIds: ['672b10010000000000000008', '672b10010000000000000009'],
+        sourceCount: 2,
+        firstReportedAt: new Date(Date.now() - 14 * 3600000),
+        lastUpdatedAt: new Date(Date.now() - 13 * 3600000),
+        status: 'active',
+        confidenceScore: 0.93,
+        createdAt: new Date(Date.now() - 14 * 3600000),
+      },
+      {
+        _id: '672b20010000000000000005',
+        title: 'European Parliament Codifies AI Transparency Mandates in Election Cycles',
+        summary: 'Comprehensive digital integrity legislation requires political campaigns to transparently label generative AI outputs and maintain audit trails.',
+        category: 'Politics',
+        country: 'global',
+        articleIds: ['672b10010000000000000010', '672b10010000000000000011'],
+        sourceCount: 2,
+        firstReportedAt: new Date(Date.now() - 16 * 3600000),
+        lastUpdatedAt: new Date(Date.now() - 15 * 3600000),
+        status: 'active',
+        confidenceScore: 0.95,
+        createdAt: new Date(Date.now() - 16 * 3600000),
       }
     ];
 
@@ -202,6 +302,7 @@ class MemoryStore {
       {
         _id: '672b30010000000000000001',
         eventId: '672b20010000000000000001',
+        category: 'Climate',
         headline: 'Geneva Climate Summit Reaches Consensus on $100B Transition Fund and Clean Energy Targets',
         overview: 'Across coverage from Reuters, Associated Press, and Financial Times, international envoys in Geneva ratified an accord setting binding 2030 clean energy targets alongside an annual financing package.',
         whatHappened: 'Following 72 hours of intensive deliberations, 120 nations formally signed the Clean Energy Transition Accord. The treaty creates an annual $100 billion infrastructure assistance fund while codifying voluntary national carbon caps.',
@@ -230,6 +331,134 @@ class MemoryStore {
           { sourceName: 'Financial Times', sourceDomain: 'ft.com', title: 'Geneva Climate Treaty: Breakthrough or Compromised Target Roadmap?', url: 'https://ft.com/climate/geneva-accord-analysis-loopholes', publishedAt: new Date(Date.now() - 2 * 3600000).toISOString() }
         ],
         generatedAt: new Date(Date.now() - 2 * 3600000),
+        model: 'gemini-1.5-flash',
+        reportVersion: '1.0',
+        disclaimer: 'AI-generated consolidated report based on available source material. This report is a synthesis of published coverage and is not independently verified journalism.'
+      },
+      {
+        _id: '672b30010000000000000002',
+        eventId: '672b20010000000000000002',
+        category: 'Economy',
+        headline: 'Global Financial Regulators Finalize Standardized AI Trading Safeguards',
+        overview: 'Central banking coalitions and financial regulators agreed on mandatory human circuit-breakers and algorithmic stress-testing guidelines for autonomous capital market operations.',
+        whatHappened: 'A multilateral regulatory taskforce issued binding risk management standards for AI trading models. Institutions will be required to maintain segregated fail-safes and submit algorithmic risk audits ahead of Q3 implementation.',
+        sharedInformation: [
+          'Regulators mandate hard human intervention switches for high-frequency autonomous trading systems.',
+          'Implementation timeline established with mandatory compliance audits required by Q3.',
+          'Both tier-one investment banks and quantitative funds fall under the regulatory perimeter.'
+        ],
+        differences: [
+          'Bloomberg highlights institutional reactions and capital reserve adjustments across major market makers.',
+          'Wall Street Journal focuses on compliance costs and legal pushback from quantitative trading firms.'
+        ],
+        disputedClaims: [
+          'Projected compliance overhead estimated between $15M and $45M per major financial institution.'
+        ],
+        missingContext: [
+          'Cross-border enforcement mechanisms between EU and US regulatory jurisdictions remain subject to bilateral memoranda.'
+        ],
+        eventContext: 'The regulatory framework responds to multiple flash anomalies attributed to interconnected algorithmic hedging.',
+        sourceReferences: [
+          { sourceName: 'Bloomberg', sourceDomain: 'bloomberg.com', title: 'Central Banks Announce Unified Regulatory Framework for Autonomous AI Systems', url: 'https://bloomberg.com/news/articles/central-banks-ai-trading-rules', publishedAt: new Date(Date.now() - 8 * 3600000).toISOString() },
+          { sourceName: 'Wall Street Journal', sourceDomain: 'wsj.com', title: 'Wall Street Prepares for New Algorithmic Compliance Mandates by Q3', url: 'https://wsj.com/finance/wall-street-algorithm-compliance-rules', publishedAt: new Date(Date.now() - 7 * 3600000).toISOString() }
+        ],
+        generatedAt: new Date(Date.now() - 6 * 3600000),
+        model: 'gemini-1.5-flash',
+        reportVersion: '1.0',
+        disclaimer: 'AI-generated consolidated report based on available source material. This report is a synthesis of published coverage and is not independently verified journalism.'
+      },
+      {
+        _id: '672b30010000000000000003',
+        eventId: '672b20010000000000000003',
+        category: 'Technology',
+        headline: 'Quantum Error-Correction Milestone Achieved with Fault-Tolerant Logical Qubits',
+        overview: 'International research consortia demonstrated a 100x reduction in quantum error rates across 48 physical-to-logical qubits, accelerating post-quantum cryptography migration timetables.',
+        whatHappened: 'Experimental physics teams maintained coherent error-suppressed states for ten seconds using surface code architectures. Government cybersecurity directorates responded by expediting national post-RSA transition deadlines.',
+        sharedInformation: [
+          'Physical-to-logical error rates reduced by two orders of magnitude in controlled benchmarks.',
+          'System sustained 48 fault-tolerant logical qubits through sustained computational cycles.',
+          'Cybersecurity agencies emphasized urgency in adopting lattice-based cryptography.'
+        ],
+        differences: [
+          'MIT Technology Review details the physics of cryogenic surface codes and quantum coherence longevity.',
+          'Wired explores systemic vulnerabilities in legacy infrastructure and urgency for cryptographic migration.'
+        ],
+        disputedClaims: [
+          'Disagreement regarding whether commercial quantum advantage will materialize by 2028 or 2031.'
+        ],
+        missingContext: [
+          'Scalability beyond 48 qubits requires unresolved interconnect and dilution refrigeration innovations.'
+        ],
+        eventContext: 'This follows five years of incremental progress since the initial demonstration of quantum supremacy.',
+        sourceReferences: [
+          { sourceName: 'MIT Technology Review', sourceDomain: 'technologyreview.com', title: 'Next-Generation Quantum Processor Demonstrates Fault-Tolerant Logical Qubits', url: 'https://technologyreview.com/quantum-processor-fault-tolerant-qubits', publishedAt: new Date(Date.now() - 12 * 3600000).toISOString() },
+          { sourceName: 'Wired', sourceDomain: 'wired.com', title: 'Quantum Computing Milestone Sparks Race for Post-Quantum Encryption Deployment', url: 'https://wired.com/story/quantum-computing-post-rsa-encryption', publishedAt: new Date(Date.now() - 11 * 3600000).toISOString() }
+        ],
+        generatedAt: new Date(Date.now() - 10 * 3600000),
+        model: 'gemini-1.5-flash',
+        reportVersion: '1.0',
+        disclaimer: 'AI-generated consolidated report based on available source material. This report is a synthesis of published coverage and is not independently verified journalism.'
+      },
+      {
+        _id: '672b30010000000000000004',
+        eventId: '672b20010000000000000004',
+        category: 'World',
+        headline: 'UN Maritime Agency Adopts Universal Carbon Tax on Commercial Shipping Fleets',
+        overview: '175 member states at the International Maritime Organization approved a global fuel tax mechanism to achieve net-zero maritime transport by 2050, channeling proceeds to vulnerable coastal nations.',
+        whatHappened: 'Following two weeks of negotiations in London, the IMO ratified a binding emissions pricing architecture. The mechanism levies standard surcharges per metric ton of greenhouse gas emitted by commercial cargo vessels exceeding 5,000 gross tonnage.',
+        sharedInformation: [
+          '175 member nations ratified the IMO maritime emissions reduction framework.',
+          'Bunker fuel carbon levies are scheduled to take binding global effect in 2027.',
+          'Revenues will be earmarked for developing island adaptation funds and green maritime R&D.'
+        ],
+        differences: [
+          'Reuters details the impact on global container freight rates and compliance logistics.',
+          'Associated Press highlights diplomatic statements from Pacific and Caribbean island representatives.'
+        ],
+        disputedClaims: [
+          'Projected cargo rate increases range from 1.5% to 6.2% depending on ship modernization status.'
+        ],
+        missingContext: [
+          'Specific baseline pricing per ton of CO2 equivalent will be negotiated at the next technical subcommittee.'
+        ],
+        eventContext: 'International shipping previously remained outside the jurisdiction of national Paris Agreement pledges.',
+        sourceReferences: [
+          { sourceName: 'Reuters', sourceDomain: 'reuters.com', title: 'UN Maritime Agency Adopts Universal Carbon Levies on Commercial Cargo Fleets', url: 'https://reuters.com/sustainability/imo-shipping-carbon-levy-agreement', publishedAt: new Date(Date.now() - 14 * 3600000).toISOString() },
+          { sourceName: 'Associated Press', sourceDomain: 'apnews.com', title: 'Pacific Island Nations Applaud Historic Maritime Emissions Levy Despite Concessions', url: 'https://apnews.com/article/un-maritime-shipping-climate-pact', publishedAt: new Date(Date.now() - 13 * 3600000).toISOString() }
+        ],
+        generatedAt: new Date(Date.now() - 12 * 3600000),
+        model: 'gemini-1.5-flash',
+        reportVersion: '1.0',
+        disclaimer: 'AI-generated consolidated report based on available source material. This report is a synthesis of published coverage and is not independently verified journalism.'
+      },
+      {
+        _id: '672b30010000000000000005',
+        eventId: '672b20010000000000000005',
+        category: 'Politics',
+        headline: 'European Parliament Enacts Strict AI Transparency Standards for Digital Campaigning',
+        overview: 'European legislators passed comprehensive election integrity legislation mandating machine-readable watermarks and cryptographic provenance for political advertisements and synthetic media.',
+        whatHappened: 'Cross-party parliamentary majorities voted to establish unprecedented transparency mandates. Political parties and third-party advocacy organizations must disclose all algorithmic targeting criteria and prominently tag generative imagery.',
+        sharedInformation: [
+          'Mandatory digital provenance metadata and watermarks required for all synthetic political content.',
+          'Parties must publish micro-targeting demographics in searchable public repositories.',
+          'Substantial regulatory penalties codified for undisclosed deepfake deployments during campaigns.'
+        ],
+        differences: [
+          'Financial Times analyzes cross-border compliance challenges for US-based digital social networks.',
+          'Bloomberg reports on political party negotiations and bipartisan compromises on disclosure timing.'
+        ],
+        disputedClaims: [
+          'Dispute regarding whether satire and comedic political parodies are adequately shielded from censorship.'
+        ],
+        missingContext: [
+          'Technical standards for standardized watermarks remain pending approval by European standards agencies.'
+        ],
+        eventContext: 'The initiative responds to documented foreign synthetic influence campaigns in recent regional plebiscites.',
+        sourceReferences: [
+          { sourceName: 'Financial Times', sourceDomain: 'ft.com', title: 'European Parliament Enacts Strict AI Transparency Standards for Digital Campaigning', url: 'https://ft.com/policy/eu-ai-political-campaign-standards', publishedAt: new Date(Date.now() - 16 * 3600000).toISOString() },
+          { sourceName: 'Bloomberg', sourceDomain: 'bloomberg.com', title: 'Bipartisan Coalition Reaches Milestone Accord on Electoral Algorithmic Oversight', url: 'https://bloomberg.com/politics/electoral-algorithmic-oversight-accord', publishedAt: new Date(Date.now() - 15 * 3600000).toISOString() }
+        ],
+        generatedAt: new Date(Date.now() - 14 * 3600000),
         model: 'gemini-1.5-flash',
         reportVersion: '1.0',
         disclaimer: 'AI-generated consolidated report based on available source material. This report is a synthesis of published coverage and is not independently verified journalism.'
@@ -335,3 +564,4 @@ class MemoryStore {
 const memoryStore = new MemoryStore();
 
 module.exports = { memoryStore };
+
