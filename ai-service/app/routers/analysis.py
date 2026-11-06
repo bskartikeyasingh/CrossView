@@ -37,6 +37,7 @@ def ask_crossview(data: AskCrossViewRequest):
         articles=data.articles,
         event_title=data.event_title or "",
         existing_claims=data.existing_claims,
-        consolidated_report=data.consolidated_report
+        consolidated_report=data.consolidated_report,
+        history=data.history
     )
 

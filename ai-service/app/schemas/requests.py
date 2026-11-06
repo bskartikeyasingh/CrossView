@@ -40,6 +40,7 @@ class AskCrossViewRequest(BaseModel):
     articles: List[ArticleInput] = Field(default_factory=list)
     existing_claims: Optional[List[dict]] = Field(default_factory=list, alias="existingClaims")
     consolidated_report: Optional[dict] = Field(default=None, alias="consolidatedReport")
+    history: Optional[List[dict]] = Field(default_factory=list)
 
     class Config:
         populate_by_name = True

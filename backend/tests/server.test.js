@@ -192,3 +192,190 @@ test('Issue 2: POST /api/news/upload indexes news and updates available developi
   );
   assert.ok(matchedEvent, 'Uploaded article must dynamically form/update a developing story event');
 });
+
+// ==========================================
+// ASK CROSSVIEW AGENT INTELLIGENCE TEST SUITE
+// ==========================================
+
+test('Ask CrossView Test 1: Basic News Question returns detailed grounded summary', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'What happened in this news event?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('### Event Intelligence Summary'));
+  assert.ok(res.data.citations.length >= 1);
+  assert.strictEqual(res.data.confidence_level, 'High');
+});
+
+test('Ask CrossView Test 2: Suggested Question "What do different newspapers disagree about?" returns publisher differences', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'What do different newspapers disagree about?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Publisher Disagreements') || res.data.answer.includes('Divergent'));
+  assert.ok(res.data.citations.length >= 2);
+  assert.strictEqual(res.data.intent, 'disagreements');
+});
+
+test('Ask CrossView Test 3: Suggested Question "Which details are corroborated?" returns verified facts', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'Which details are corroborated?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Corroborated Facts') || res.data.answer.includes('CORROBORATED'));
+  assert.strictEqual(res.data.intent, 'corroborated');
+});
+
+test('Ask CrossView Test 4: Suggested Question "What information is still missing?" returns gaps and unverified items', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'What information is still missing?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Missing Context') || res.data.answer.includes('PENDING'));
+  assert.strictEqual(res.data.intent, 'missing_context');
+});
+
+test('Ask CrossView Test 5: Suggested Question "Which publishers reported this event?" returns publisher list with headlines', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'Which publishers reported this event?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Reporting Publishers Covering'));
+  assert.strictEqual(res.data.intent, 'publishers');
+  assert.ok(res.data.citations.length >= 2);
+});
+
+test('Ask CrossView Test 6: Conversation Context remembers active event across follow-up queries', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate');
+  assert.ok(climateEvent);
+
+  // Turn 1: Discuss climate summit
+  const turn1 = await callExpress(app, {
+    method: 'POST',
+    url: '/api/ai/ask/general',
+    body: { question: 'Explain the Geneva climate summit' },
+  });
+  assert.strictEqual(turn1.statusCode, 200);
+  assert.strictEqual(turn1.data.resolvedEvent.id, climateEvent._id);
+
+  // Turn 2: Follow-up without mentioning event name
+  const turn2 = await callExpress(app, {
+    method: 'POST',
+    url: '/api/ai/ask/general',
+    body: {
+      question: 'What is the current death toll?',
+      history: [
+        { sender: 'user', text: 'Explain the Geneva climate summit', eventId: climateEvent._id },
+        { sender: 'assistant', text: turn1.data.answer, eventId: climateEvent._id },
+      ],
+      activeEventId: climateEvent._id,
+    },
+  });
+  assert.strictEqual(turn2.statusCode, 200);
+  assert.strictEqual(turn2.data.resolvedEvent.id, climateEvent._id);
+  assert.ok(turn2.data.answer.includes('no casualties') || turn2.data.answer.includes('NOT APPLICABLE'));
+});
+
+test('Ask CrossView Test 7: Latest Developments returns newest dispatch with timestamp comparison', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate') || eventsRes.data.events[0];
+  const eventId = climateEvent._id;
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: `/api/ai/ask/${eventId}`,
+    body: { question: 'What is the latest update?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Latest Developments'));
+  assert.strictEqual(res.data.intent, 'latest_updates');
+});
+
+test('Ask CrossView Test 8: Insufficient Evidence explicitly communicates lack of records rather than inventing info', async () => {
+  const res = await callExpress(app, {
+    method: 'POST',
+    url: '/api/ai/ask/nonexistent_event_id_xyz',
+    body: { question: 'What happened with the mythical subterranean crystal facility?' },
+  });
+  assert.strictEqual(res.statusCode, 200);
+  assert.strictEqual(res.data.success, true);
+  assert.ok(res.data.answer.includes('Insufficient Evidence') || res.data.answer.includes('insufficient'));
+  assert.strictEqual(res.data.confidence_level, 'Low');
+});
+
+test('Ask CrossView Test 9: Event Switching switches context cleanly to newly requested event', async () => {
+  const eventsRes = await callExpress(app, { url: '/api/events' });
+  const climateEvent = eventsRes.data.events.find((e) => e.category === 'Climate');
+  const quantumEvent = eventsRes.data.events.find((e) => e.title.includes('Quantum'));
+  assert.ok(climateEvent);
+  assert.ok(quantumEvent);
+
+  // User was talking about climate event, then explicitly switches to quantum hardware error threshold
+  const switchRes = await callExpress(app, {
+    method: 'POST',
+    url: '/api/ai/ask/general',
+    body: {
+      question: 'What about the quantum hardware error threshold cleared in the major lab milestone?',
+      history: [
+        { sender: 'user', text: 'Explain the Geneva climate summit', eventId: climateEvent._id },
+        { sender: 'assistant', text: 'The Geneva summit concluded...', eventId: climateEvent._id },
+      ],
+      activeEventId: climateEvent._id,
+    },
+  });
+  assert.strictEqual(switchRes.statusCode, 200);
+  assert.strictEqual(switchRes.data.resolvedEvent.id, quantumEvent._id);
+  assert.ok(switchRes.data.answer.includes('Quantum') || switchRes.data.answer.includes('qubit'));
+});
+
+test('Ask CrossView Test 10: Regression Test verifies all existing modules remain functional', async () => {
+  // 1. Dashboard Overview
+  const ovRes = await callExpress(app, { url: '/api/dashboard/overview' });
+  assert.strictEqual(ovRes.statusCode, 200);
+  assert.strictEqual(ovRes.data.success, true);
+  assert.ok(ovRes.data.latestReports.length >= 3);
+
+  // 2. Events & Timelines
+  const evRes = await callExpress(app, { url: '/api/events' });
+  assert.strictEqual(evRes.statusCode, 200);
+  const evId = evRes.data.events[0]._id;
+  const tlRes = await callExpress(app, { url: `/api/events/${evId}/timeline` });
+  assert.strictEqual(tlRes.statusCode, 200);
+  assert.ok(Array.isArray(tlRes.data.timeline.entries));
+
+  // 3. Claims analysis
+  const clRes = await callExpress(app, { url: '/api/claims' });
+  assert.strictEqual(clRes.statusCode, 200);
+  assert.ok(Array.isArray(clRes.data.claims));
+});

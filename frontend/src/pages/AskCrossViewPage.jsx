@@ -19,6 +19,7 @@ export default function AskCrossViewPage() {
 
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(initialEventId);
+  const [activeEvent, setActiveEvent] = useState(null);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -32,16 +33,56 @@ export default function AskCrossViewPage() {
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
+  const loadEventsList = () => {
     apiService
-      .getEvents({ limit: 10 })
+      .getEvents({ limit: 50 })
       .then((res) => {
         if (res.success && res.events) {
           setEvents(res.events);
+          if (initialEventId !== 'general') {
+            const found = res.events.find((e) => String(e._id || e.id) === String(initialEventId));
+            if (found) {
+              setActiveEvent({
+                id: String(found._id || found.id),
+                title: found.title,
+                category: found.category,
+                sourceCount: found.sourceCount,
+              });
+            }
+          }
         }
       })
       .catch((err) => console.warn('Events fetch error:', err));
+  };
+
+  useEffect(() => {
+    loadEventsList();
+
+    const handleSync = () => loadEventsList();
+    window.addEventListener('crossview:sync-intelligence', handleSync);
+    window.addEventListener('crossview:news-uploaded', handleSync);
+
+    return () => {
+      window.removeEventListener('crossview:sync-intelligence', handleSync);
+      window.removeEventListener('crossview:news-uploaded', handleSync);
+    };
   }, []);
+
+  useEffect(() => {
+    const queryEventId = new URLSearchParams(location.search).get('eventId');
+    if (queryEventId && queryEventId !== selectedEventId) {
+      setSelectedEventId(queryEventId);
+      const found = events.find((e) => String(e._id || e.id) === String(queryEventId));
+      if (found) {
+        setActiveEvent({
+          id: String(found._id || found.id),
+          title: found.title,
+          category: found.category,
+          sourceCount: found.sourceCount,
+        });
+      }
+    }
+  }, [location.search, events]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,14 +96,41 @@ export default function AskCrossViewPage() {
     'Which publishers reported this event?',
   ];
 
+  const handleScopeChange = (newId) => {
+    setSelectedEventId(newId);
+    if (newId === 'general') {
+      setActiveEvent(null);
+    } else {
+      const found = events.find((e) => String(e._id || e.id) === String(newId));
+      if (found) {
+        setActiveEvent({
+          id: String(found._id || found.id),
+          title: found.title,
+          category: found.category,
+          sourceCount: found.sourceCount,
+        });
+      }
+    }
+  };
+
   const handleSend = async (questionText = null) => {
     const q = (questionText || inputQuestion).trim();
     if (!q || loading) return;
+
+    // Resolve context for sending
+    let targetId = selectedEventId;
+    if (targetId === 'general' && activeEvent?.id) {
+      targetId = activeEvent.id;
+    } else if (targetId === 'general' && events.length > 0 && presetQuestions.includes(q)) {
+      // If clicking a suggested question in general scope without active context, default to the latest developing story
+      targetId = String(events[0]._id || events[0].id);
+    }
 
     const userMsg = {
       id: `msg_u_${Date.now()}`,
       sender: 'user',
       text: q,
+      eventId: targetId,
       timestamp: new Date(),
     };
 
@@ -71,7 +139,26 @@ export default function AskCrossViewPage() {
     setLoading(true);
 
     try {
-      const res = await apiService.askCrossView(selectedEventId, q);
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .slice(-8)
+        .map((m) => ({
+          sender: m.sender,
+          text: m.text,
+          eventId: m.eventId,
+        }));
+
+      const res = await apiService.askCrossView(targetId, q, {
+        history,
+        activeEventId: targetId !== 'general' ? targetId : activeEvent?.id,
+      });
+
+      if (res.resolvedEvent) {
+        setActiveEvent(res.resolvedEvent);
+        if (selectedEventId === 'general') {
+          setSelectedEventId(res.resolvedEvent.id);
+        }
+      }
 
       const aiMsg = {
         id: `msg_a_${Date.now()}`,
@@ -80,6 +167,7 @@ export default function AskCrossViewPage() {
         citations: res.citations || [],
         confidence: res.confidence_level || 'High',
         unanswered: res.unanswered_aspects,
+        eventId: res.resolvedEvent?.id || targetId,
         timestamp: new Date(),
       };
 
@@ -126,12 +214,12 @@ export default function AskCrossViewPage() {
           </label>
           <select
             value={selectedEventId}
-            onChange={(e) => setSelectedEventId(e.target.value)}
+            onChange={(e) => handleScopeChange(e.target.value)}
             className="w-full p-2 bg-[#F7F7F5] border border-border rounded text-xs font-medium text-primary focus:outline-none focus:border-navy"
           >
             <option value="general">Global Stream (All Recent Events)</option>
             {events.map((evt) => (
-              <option key={evt._id} value={evt._id}>
+              <option key={evt._id || evt.id} value={evt._id || evt.id}>
                 {evt.title.substring(0, 45)}...
               </option>
             ))}
@@ -149,7 +237,8 @@ export default function AskCrossViewPage() {
           <button
             key={idx}
             onClick={() => handleSend(pq)}
-            className="px-3 py-1 rounded-full text-xs font-medium bg-white border border-border hover:border-navy text-primary hover:text-navy transition-colors shadow-xs"
+            disabled={loading}
+            className="px-3 py-1 rounded-full text-xs font-medium bg-white border border-border hover:border-navy text-primary hover:text-navy transition-colors shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {pq}
           </button>
@@ -158,6 +247,25 @@ export default function AskCrossViewPage() {
 
       {/* Chat Container */}
       <div className="bg-white rounded-lg border border-border shadow-card flex flex-col h-[520px]">
+        {/* Active Context Banner */}
+        {activeEvent && selectedEventId !== 'general' && (
+          <div className="flex items-center justify-between px-4 py-2 bg-navy/5 border-b border-border text-xs">
+            <div className="flex items-center gap-2 truncate">
+              <span className="font-bold text-navy uppercase text-[10px] tracking-wider bg-navy/10 px-2 py-0.5 rounded">
+                Active Context
+              </span>
+              <span className="font-semibold text-primary truncate" title={activeEvent.title}>
+                {activeEvent.title}
+              </span>
+            </div>
+            <button
+              onClick={() => handleScopeChange('general')}
+              className="text-[11px] text-navy font-semibold hover:underline flex-shrink-0 ml-2"
+            >
+              Reset to Global
+            </button>
+          </div>
+        )}
         {/* Messages Scroll Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {messages.map((m) => (

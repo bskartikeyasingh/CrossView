@@ -64,7 +64,8 @@ export const apiService = {
   consolidateEvent: (eventId) => api.post(`/ai/consolidate/${eventId}`),
   compareEvent: (eventId) => api.post(`/ai/compare/${eventId}`),
   analyzeClaimsEvent: (eventId) => api.post(`/ai/analyze-claims/${eventId}`),
-  askCrossView: (eventId, question) => api.post(`/ai/ask/${eventId}`, { question }),
+  askCrossView: (eventId, question, context = {}) =>
+    api.post(`/ai/ask/${eventId}`, { question, ...context }),
 
   // Claims
   getAllClaims: (params = {}) => api.get('/claims', { params }),
