@@ -25,25 +25,58 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('crossview_auth_token', authToken);
     setToken(authToken);
 
+    // When an actual Firebase user is authenticated, guarantee genuine profile properties
+    if (firebaseUser) {
+      const realProfile = {
+        firebaseUid: firebaseUser.uid,
+        name: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'Analyst'),
+        email: firebaseUser.email || '',
+        photoURL: firebaseUser.photoURL || '',
+        role: 'USER',
+        isFirebaseUser: true,
+      };
+
+      try {
+        const res = await apiService.getMe();
+        if (res.success && res.user) {
+          setUser({
+            ...realProfile,
+            ...res.user,
+            name: res.user.name || realProfile.name,
+            email: res.user.email || realProfile.email,
+            photoURL: res.user.profileImage || realProfile.photoURL,
+          });
+        } else {
+          setUser(realProfile);
+        }
+      } catch (_) {
+        // Even if backend /auth/me call is pending or offline, preserve real Firebase identity
+        setUser(realProfile);
+      }
+      return;
+    }
+
+    // Explicit demo user branch ONLY
     try {
       const res = await apiService.getMe();
       if (res.success && res.user) {
         setUser(res.user);
       } else {
         setUser({
-          firebaseUid: firebaseUser?.uid || 'demo-user-123',
-          name: firebaseUser?.displayName || firebaseUser?.email?.split('@')[0] || 'CrossView User',
-          email: firebaseUser?.email || 'analyst@crossview.news',
+          firebaseUid: 'demo_analyst_uid',
+          name: 'Editorial Analyst (Demo)',
+          email: 'editorial.analyst@crossview.news',
           role: 'USER',
+          isDemo: true,
         });
       }
-    } catch (err) {
-      // In development fallback, create a local user profile
+    } catch (_) {
       setUser({
-        firebaseUid: firebaseUser?.uid || 'demo-user-123',
-        name: firebaseUser?.displayName || firebaseUser?.email?.split('@')[0] || 'CrossView User',
-        email: firebaseUser?.email || 'analyst@crossview.news',
+        firebaseUid: 'demo_analyst_uid',
+        name: 'Editorial Analyst (Demo)',
+        email: 'editorial.analyst@crossview.news',
         role: 'USER',
+        isDemo: true,
       });
     }
   };
@@ -57,11 +90,14 @@ export const AuthProvider = ({ children }) => {
             await syncBackendUser(idToken, firebaseUser);
           } catch (err) {
             console.error('Error fetching Firebase ID token:', err);
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('crossview_auth_token');
           }
         } else {
-          // If no Firebase session and no stored demo token
+          // If no active Firebase session, only restore if an explicit demo session was clicked
           const storedToken = localStorage.getItem('crossview_auth_token');
-          if (storedToken && storedToken.startsWith('mock_')) {
+          if (storedToken && storedToken.startsWith('mock_demo_session_')) {
             await syncBackendUser(storedToken);
           } else {
             setUser(null);
@@ -74,11 +110,14 @@ export const AuthProvider = ({ children }) => {
 
       return () => unsubscribe();
     } else {
-      // Firebase not configured yet — check if demo session exists
+      // Firebase not configured — only allow explicitly initiated demo session
       const storedToken = localStorage.getItem('crossview_auth_token');
-      if (storedToken) {
+      if (storedToken && storedToken.startsWith('mock_demo_session_')) {
         syncBackendUser(storedToken).finally(() => setLoading(false));
       } else {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('crossview_auth_token');
         setLoading(false);
       }
     }
@@ -103,15 +142,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error(friendlyMessage);
       }
     } else {
-      // Demo authentication mode
-      const demoToken = `mock_token_${Date.now()}`;
-      await syncBackendUser(demoToken, {
-        uid: 'demo_uid_' + Math.random().toString(36).substring(2, 8),
-        email,
-        displayName: email.split('@')[0],
-      });
       setLoading(false);
-      return { success: true };
+      const msg = 'Firebase email authentication is not configured in this environment.';
+      setError(msg);
+      throw new Error(msg);
     }
   };
 
@@ -134,47 +168,65 @@ export const AuthProvider = ({ children }) => {
         throw new Error(friendlyMessage);
       }
     } else {
-      // Demo registration
-      const demoToken = `mock_token_${Date.now()}`;
-      await syncBackendUser(demoToken, {
-        uid: 'demo_uid_' + Math.random().toString(36).substring(2, 8),
-        email,
-        displayName: fullName || email.split('@')[0],
-      });
       setLoading(false);
-      return { success: true };
+      const msg = 'Firebase email registration is not configured in this environment.';
+      setError(msg);
+      throw new Error(msg);
     }
   };
 
-  // Google Login
+  // Genuine Firebase Google Login — strictly prohibited from demo fallback
   const loginWithGoogle = async () => {
     setError(null);
     setLoading(true);
 
-    if (isFirebaseConfigured && auth && googleProvider) {
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const idToken = await result.user.getIdToken();
-        await syncBackendUser(idToken, result.user);
-        setLoading(false);
-        return { success: true, user: result.user };
-      } catch (err) {
-        setLoading(false);
-        const friendlyMessage = getFirebaseErrorMessage(err.code) || err.message;
-        setError(friendlyMessage);
-        throw new Error(friendlyMessage);
-      }
-    } else {
-      // Demo Google login
-      const demoToken = `mock_google_token_${Date.now()}`;
-      await syncBackendUser(demoToken, {
-        uid: 'demo_google_uid_101',
-        email: 'google.analyst@crossview.news',
-        displayName: 'Google News Analyst',
-      });
+    if (!isFirebaseConfigured || !auth || !googleProvider) {
       setLoading(false);
-      return { success: true };
+      const errMsg =
+        'Firebase configuration is missing or incomplete. Please verify your Firebase project credentials.';
+      setError(errMsg);
+      throw new Error(errMsg);
     }
+
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (!result || !result.user) {
+        throw new Error('Google authentication returned no user session.');
+      }
+
+      const firebaseUser = result.user;
+      const idToken = await firebaseUser.getIdToken(true);
+
+      // Guarantee real Google profile properties are updated into authenticated state
+      await syncBackendUser(idToken, firebaseUser);
+      setLoading(false);
+      return { success: true, user: firebaseUser };
+    } catch (err) {
+      setLoading(false);
+      const friendlyMessage =
+        getFirebaseErrorMessage(err.code) || err.message || 'Google authentication failed.';
+      setError(friendlyMessage);
+      throw new Error(friendlyMessage);
+    }
+  };
+
+  // Explicit, isolated Demo login option
+  const loginWithDemo = async () => {
+    setError(null);
+    setLoading(true);
+    const demoToken = `mock_demo_session_${Date.now()}`;
+    const demoUser = {
+      firebaseUid: 'demo_analyst_uid',
+      name: 'Editorial Analyst (Demo)',
+      email: 'editorial.analyst@crossview.news',
+      role: 'USER',
+      isDemo: true,
+    };
+    localStorage.setItem('crossview_auth_token', demoToken);
+    setToken(demoToken);
+    setUser(demoUser);
+    setLoading(false);
+    return { success: true, user: demoUser };
   };
 
   // Password Reset
@@ -190,7 +242,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error(msg);
       }
     } else {
-      return { success: true, demo: true };
+      throw new Error('Firebase password reset is not configured.');
     }
   };
 
@@ -219,6 +271,7 @@ export const AuthProvider = ({ children }) => {
         loginWithEmail,
         registerWithEmail,
         loginWithGoogle,
+        loginWithDemo,
         resetPassword,
         logoutUser,
         setUser,
@@ -250,11 +303,20 @@ function getFirebaseErrorMessage(code) {
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
     case 'auth/popup-closed-by-user':
-      return 'Google sign-in popup was cancelled.';
+      return 'Google sign-in popup was closed before completing authentication.';
+    case 'auth/popup-blocked':
+      return 'Google sign-in popup was blocked by your browser. Please allow popups for this site and try again.';
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized in Firebase Console. Please add your Render domain to Firebase Authentication > Settings > Authorized Domains.';
+    case 'auth/operation-not-allowed':
+      return 'Google sign-in is not enabled in Firebase Console. Please enable Google under Authentication > Sign-in method.';
+    case 'auth/cancelled-popup-request':
+      return 'Only one sign-in popup request is allowed at a time.';
     case 'auth/network-request-failed':
-      return 'Network connection failed. Please check your internet connection.';
+      return 'Network connection failed. Please check your internet connection and try again.';
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with the same email address using a different sign-in method.';
     default:
       return null;
   }
 }
-

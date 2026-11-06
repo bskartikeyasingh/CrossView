@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const { loginWithEmail, loginWithGoogle, isFirebaseConfigured } = useAuth();
+  const { loginWithEmail, loginWithGoogle, loginWithDemo, isFirebaseConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,12 +49,13 @@ export default function LoginPage() {
   };
 
   const handleQuickDemo = async () => {
+    setErrorMessage('');
     setLoading(true);
     try {
-      await loginWithEmail('editorial.analyst@crossview.news', 'Password123!');
+      await loginWithDemo();
       navigate(redirectPath);
     } catch (err) {
-      setErrorMessage(err.message);
+      setErrorMessage(err.message || 'Demo sign-in failed.');
     } finally {
       setLoading(false);
     }
