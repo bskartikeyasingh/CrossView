@@ -154,6 +154,50 @@ test('Protected routes accept valid token and manage user profile and bookmarks'
   assert.strictEqual(delRes.statusCode, 200);
 });
 
+test('Routing parity: direct endpoints (/dashboard/overview, /dashboard/activity, /news/refresh, /auth/me, /api/health) work without /api prefix', async () => {
+  // GET /api/health
+  const apiHealthRes = await callExpress(app, { url: '/api/health' });
+  assert.strictEqual(apiHealthRes.statusCode, 200);
+  assert.strictEqual(apiHealthRes.data.status, 'healthy');
+
+  // GET /dashboard/overview (without /api)
+  const overviewRes = await callExpress(app, { url: '/dashboard/overview' });
+  assert.strictEqual(overviewRes.statusCode, 200);
+  assert.strictEqual(overviewRes.data.success, true);
+  assert.ok(overviewRes.data.stats.totalArticles >= 0);
+  assert.ok(Array.isArray(overviewRes.data.trendingEvents));
+
+  // GET /dashboard/activity?range=7d (without /api)
+  const actRes = await callExpress(app, { url: '/dashboard/activity?range=7d' });
+  assert.strictEqual(actRes.statusCode, 200);
+  assert.strictEqual(actRes.data.success, true);
+  assert.ok(Array.isArray(actRes.data.activity));
+  assert.ok(actRes.data.activity.length > 0);
+
+  // GET /auth/me unauthenticated (without /api)
+  const unauthMe = await callExpress(app, { url: '/auth/me' });
+  assert.strictEqual(unauthMe.statusCode, 401);
+  assert.strictEqual(unauthMe.data.success, false);
+
+  // GET /auth/me authenticated (without /api)
+  const authMe = await callExpress(app, {
+    url: '/auth/me',
+    headers: { Authorization: 'Bearer mock_demo_token_analyst_123' },
+  });
+  assert.strictEqual(authMe.statusCode, 200);
+  assert.strictEqual(authMe.data.success, true);
+  assert.ok(authMe.data.user.email);
+
+  // POST /news/refresh (without /api)
+  const refreshRes = await callExpress(app, {
+    method: 'POST',
+    url: '/news/refresh',
+    body: { category: 'Climate' },
+  });
+  assert.strictEqual(refreshRes.statusCode, 200);
+  assert.strictEqual(refreshRes.data.success, true);
+});
+
 test('Issue 1: GET /api/dashboard/overview reports contain populated category fields for all domains', async () => {
   const res = await callExpress(app, { url: '/api/dashboard/overview' });
   assert.strictEqual(res.statusCode, 200);

@@ -35,7 +35,6 @@ const limiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests from this IP, please try again later.' },
 });
-app.use('/api', limiter);
 
 // CORS configuration
 const allowedOrigins = [
@@ -65,15 +64,17 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint (accessible at both /health and /api/health)
+const healthHandler = (req, res) => {
   res.json({
     status: 'healthy',
     service: 'CrossView Intelligence Backend',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
-});
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 app.get('/', (req, res) => {
   res.json({
@@ -84,16 +85,32 @@ app.get('/', (req, res) => {
   });
 });
 
-// Mount API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/news', newsRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/claims', claimRoutes);
-app.use('/api/bookmarks', bookmarkRoutes);
-app.use('/api/saved-reports', savedReportRoutes);
-app.use('/api/users', userRoutes);
+// Unified API router: registers all intelligence routes
+const apiRouter = express.Router();
+apiRouter.use(limiter);
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/dashboard', dashboardRoutes);
+apiRouter.use('/news', newsRoutes);
+apiRouter.use('/events', eventRoutes);
+apiRouter.use('/ai', aiRoutes);
+apiRouter.use('/claims', claimRoutes);
+apiRouter.use('/bookmarks', bookmarkRoutes);
+apiRouter.use('/saved-reports', savedReportRoutes);
+apiRouter.use('/users', userRoutes);
+
+// Mount API routes under /api (standard REST convention) AND directly at root /
+// This ensures that endpoints like /dashboard/overview, /auth/me, /news/refresh, etc.
+// work seamlessly whether requested with or without the /api prefix.
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
+
+// 404 handler for unmatched routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `Endpoint not found: ${req.method} ${req.originalUrl}`,
+  });
+});
 
 // Centralized error handling
 app.use(errorHandler);
